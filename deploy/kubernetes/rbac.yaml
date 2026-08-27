@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: contextslo
+  namespace: contextslo-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: contextslo-readonly
+rules:
+  - apiGroups: [""]
+    resources: [pods, services, serviceaccounts, namespaces]
+    verbs: [get, list, watch]
+  - apiGroups: [contextslo.io]
+    resources: [securitycontextsloes, securitycontextsloes/status]
+    verbs: [get, list, watch, patch, update]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: contextslo-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: contextslo-readonly
+subjects:
+  - kind: ServiceAccount
+    name: contextslo
+    namespace: contextslo-system

@@ -1,0 +1,21 @@
+apiVersion: contextslo.io/v1alpha1
+kind: SecurityContextSLO
+metadata:
+  name: orders-api-context
+  namespace: contextslo-system
+spec:
+  service: orders-api
+  tier: Tier 1
+  target: 99.5
+  window: 30d
+  latency:
+    p95: 10s
+  requiredContext:
+    - process
+    - filesystem
+    - network
+    - dns
+    - kubernetes
+    - cloudIdentity
+    - api
+    - mcp

@@ -1,0 +1,17 @@
+services:
+  contextslo:
+    build: .
+    image: contextslo:local
+    ports:
+      - "8080:8080"
+    volumes:
+      - contextslo-data:/data
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  contextslo-data:

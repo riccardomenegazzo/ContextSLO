@@ -1,0 +1,54 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: securitycontextsloes.contextslo.io
+spec:
+  group: contextslo.io
+  scope: Namespaced
+  names:
+    plural: securitycontextsloes
+    singular: securitycontextslo
+    kind: SecurityContextSLO
+    shortNames: [cslo]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Target
+          type: number
+          jsonPath: .spec.target
+        - name: Service
+          type: string
+          jsonPath: .spec.service
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [target, service, requiredContext]
+              properties:
+                service: {type: string, minLength: 1}
+                tier: {type: string, default: Tier 1}
+                target: {type: number, minimum: 0, maximum: 100}
+                window: {type: string, default: 30d}
+                latency:
+                  type: object
+                  properties:
+                    p95: {type: string, pattern: '^[0-9]+(ms|s|m)$'}
+                requiredContext:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items:
+                    type: string
+                    enum: [process, filesystem, network, dns, kubernetes, cloudIdentity, api, mcp]
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+      subresources:
+        status: {}

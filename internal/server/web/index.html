@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="ContextSLO continuously proves whether cloud security telemetry preserves enough runtime context to explain what happened.">
+  <title>ContextSLO — Security Context Reliability</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <aside class="sidebar">
+    <a class="brand" href="#overview" aria-label="ContextSLO home">
+      <span class="brand-mark"><i></i><i></i><i></i></span>
+      <span><strong>Context</strong><b>SLO</b></span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <p class="nav-label">Workspace</p>
+      <a class="nav-item active" href="#overview" data-section="overview"><span class="nav-icon">⌁</span>Overview</a>
+      <a class="nav-item" href="#coverage" data-section="coverage"><span class="nav-icon">◫</span>Context coverage</a>
+      <a class="nav-item" href="#graph" data-section="graph"><span class="nav-icon">⌘</span>Evidence graph</a>
+      <a class="nav-item" href="#runs" data-section="runs"><span class="nav-icon">↻</span>Validation runs</a>
+      <p class="nav-label">Configure</p>
+      <button class="nav-item nav-button" id="edit-slo"><span class="nav-icon">◎</span>Security SLO</button>
+      <a class="nav-item" href="https://github.com/riccardomenegazzo/ContextSLO" target="_blank" rel="noreferrer"><span class="nav-icon">↗</span>Documentation</a>
+    </nav>
+    <div class="sidebar-status">
+      <div class="status-row"><span class="pulse"></span><div><b>Truth sensor</b><small>Connected · 8 sources</small></div></div>
+      <div class="version">Community preview <span>v0.1.0</span></div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div class="mobile-brand">Context<b>SLO</b></div>
+      <div class="crumb"><span>Clusters</span><i>/</i><strong id="cluster-crumb">production-eu</strong><span class="live-pill"><i></i>Live</span></div>
+      <div class="top-actions">
+        <button class="icon-button" id="theme-toggle" aria-label="Toggle color theme">◐</button>
+        <a class="github-button" href="https://github.com/riccardomenegazzo/ContextSLO" target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
+      </div>
+    </header>
+
+    <div class="content">
+      <section class="page-heading" id="overview">
+        <div>
+          <div class="eyebrow"><span></span> SECURITY CONTEXT RELIABILITY</div>
+          <h1>Is your security platform<br><em>seeing the whole story?</em></h1>
+          <p>Independent, synthetic proof that runtime events retain their workload, process, network, API, and identity context.</p>
+        </div>
+        <div class="run-control">
+          <label for="scenario">Validation scenario</label>
+          <div class="run-row">
+            <select id="scenario">
+              <option value="identity-gap">Identity + MCP gap</option>
+              <option value="baseline">Healthy baseline</option>
+              <option value="mcp-gap">MCP attribution gap</option>
+              <option value="latency-regression">Telemetry latency</option>
+            </select>
+            <button class="primary-button" id="run-validation"><span class="play">▶</span>Run validation</button>
+          </div>
+          <small>Safe canaries only · no attack simulation</small>
+        </div>
+      </section>
+
+      <section class="metric-grid" aria-label="Key metrics">
+        <article class="metric-card score-card">
+          <div class="metric-head"><span>Overall context SLO</span><span class="metric-chip danger" id="slo-state">BREACHED</span></div>
+          <div class="score-wrap"><div class="score-ring" id="score-ring"><div><strong id="score-value">—</strong><span>%</span><small>context integrity</small></div></div>
+          <div class="score-copy"><b id="score-delta">—</b><span>vs. healthy baseline</span><p>Target <strong id="score-target">—</strong></p></div></div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-head"><span>Context error budget</span><span class="metric-icon">◔</span></div>
+          <div class="metric-number" id="budget-value">—</div>
+          <div class="metric-caption">consumed this window</div>
+          <div class="budget-track"><i id="budget-bar"></i></div>
+          <div class="metric-foot"><span id="budget-allowed">— allowed</span><b id="budget-status">—</b></div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-head"><span>Telemetry freshness</span><span class="metric-icon">◷</span></div>
+          <div class="metric-number"><span id="latency-value">—</span><small> sec</small></div>
+          <div class="metric-caption">p95 event-to-context latency</div>
+          <div class="mini-scale"><i id="latency-marker"></i><span></span><span></span><span></span><span></span></div>
+          <div class="metric-foot"><span>0s</span><b id="latency-target">SLO ≤ —</b></div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-head"><span>Validation activity</span><span class="metric-icon">↻</span></div>
+          <div class="metric-number" id="run-count">—</div>
+          <div class="metric-caption">synthetic journeys measured</div>
+          <div class="metric-foot activity"><span><i class="dot success"></i><b id="passing-count">—</b> passing</span><span><i class="dot danger"></i><b id="failing-count">—</b> failing</span></div>
+        </article>
+      </section>
+
+      <section class="panel coverage-panel" id="coverage">
+        <div class="panel-header">
+          <div><div class="panel-kicker">SIGNAL QUALITY</div><h2>Context coverage</h2><p>Can each ground-truth event be seen and attributed?</p></div>
+          <div class="legend"><span><i class="dot success"></i>Preserved</span><span><i class="dot warn"></i>Partial</span><span><i class="dot danger"></i>Lost</span></div>
+        </div>
+        <div class="dimension-grid" id="dimension-grid"><div class="loading-block"></div></div>
+      </section>
+
+      <section class="panel graph-panel" id="graph">
+        <div class="panel-header">
+          <div><div class="panel-kicker">CAUSALITY</div><h2>Evidence graph</h2><p id="graph-subtitle">End-to-end attribution for the latest synthetic transaction.</p></div>
+          <div class="marker-badge"><span>MARKER</span><code id="marker-value">CTX-——</code><button id="copy-marker" aria-label="Copy marker">□</button></div>
+        </div>
+        <div class="graph-scroll"><div class="evidence-graph" id="evidence-graph"></div></div>
+        <div class="break-list" id="break-list"></div>
+      </section>
+
+      <section class="split-grid">
+        <article class="panel history-panel">
+          <div class="panel-header compact"><div><div class="panel-kicker">30-DAY WINDOW</div><h2>Context integrity trend</h2></div><div class="trend-summary"><b id="coverage-average">—</b><span>rolling average</span></div></div>
+          <div class="chart-wrap"><svg id="history-chart" viewBox="0 0 720 210" role="img" aria-label="Context integrity history chart"></svg></div>
+        </article>
+        <article class="panel latest-panel">
+          <div class="panel-header compact"><div><div class="panel-kicker">LATEST FINDING</div><h2>What broke?</h2></div><span class="finding-severity">HIGH</span></div>
+          <div class="finding-body" id="finding-body"><div class="loading-block"></div></div>
+        </article>
+      </section>
+
+      <section class="panel runs-panel" id="runs">
+        <div class="panel-header">
+          <div><div class="panel-kicker">AUDIT TRAIL</div><h2>Recent validation runs</h2><p>Independent ground truth compared with security telemetry.</p></div>
+          <button class="secondary-button" id="export-json">Export JSON ↓</button>
+        </div>
+        <div class="table-scroll"><table><thead><tr><th>Validation</th><th>Scenario</th><th>Integrity</th><th>p95 latency</th><th>Context breaks</th><th>Status</th></tr></thead><tbody id="runs-table"><tr><td colspan="6">Loading validation history…</td></tr></tbody></table></div>
+      </section>
+
+      <footer><div class="footer-brand">Context<span>SLO</span></div><p>Reliability engineering for security context.</p><span>Vendor-neutral · Open source · Safe by design</span></footer>
+    </div>
+  </main>
+
+  <dialog id="run-dialog" class="run-dialog">
+    <div class="dialog-scan" aria-hidden="true"></div>
+    <div class="dialog-head"><span class="brand-mark mini"><i></i><i></i><i></i></span><div><div class="panel-kicker">SYNTHETIC VALIDATION</div><h2>Tracing the whole story</h2></div></div>
+    <div class="run-marker" id="run-marker">Preparing canary…</div>
+    <div class="run-steps" id="run-steps"></div>
+    <div class="dialog-progress"><i id="dialog-progress-bar"></i></div>
+  </dialog>
+
+  <dialog id="slo-dialog" class="slo-dialog">
+    <form method="dialog" id="slo-form">
+      <div class="dialog-title"><div><div class="panel-kicker">CONFIGURATION</div><h2>Security Context SLO</h2><p>Define the context that Tier-1 events must preserve.</p></div><button value="cancel" class="close-button" aria-label="Close">×</button></div>
+      <div class="form-grid">
+        <label>SLO name<input id="slo-name" required></label><label>Service<input id="slo-service" required></label>
+        <label>Target (%)<input id="slo-target" type="number" step="0.1" min="1" max="100" required></label><label>p95 latency (ms)<input id="slo-latency" type="number" min="1" required></label>
+      </div>
+      <div class="context-tags" id="required-context"></div>
+      <div class="dialog-actions"><button value="cancel" class="secondary-button">Cancel</button><button value="default" class="primary-button" id="save-slo">Save SLO</button></div>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
