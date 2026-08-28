@@ -43,3 +43,8 @@ enum bpf_map_type {
 };
 
 struct trace_entry { unsigned short type; unsigned char flags; unsigned char preempt_count; int pid; } __attribute__((preserve_access_index));
+struct task_struct { struct task_struct *real_parent; int tgid; } __attribute__((preserve_access_index));
+struct trace_event_raw_sys_enter { struct trace_entry ent; long id; unsigned long args[6]; char __data[0]; } __attribute__((preserve_access_index));
+struct trace_event_raw_sched_process_exec { struct trace_entry ent; __u32 __data_loc_filename; pid_t pid; pid_t old_pid; char __data[0]; } __attribute__((preserve_access_index));
+
+#endif

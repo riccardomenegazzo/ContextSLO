@@ -1,5 +1,5 @@
 FROM golang:1.27-bookworm AS build
-RUN apt-get update && apt-get install -y --no-install-recommends bpftool clang llvm ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends bpftool clang llvm libbpf-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
