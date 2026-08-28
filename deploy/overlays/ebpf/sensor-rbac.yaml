@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: contextslo-sensor, namespace: contextslo-system}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: contextslo-sensor}
+rules:
+  - apiGroups: [""]
+    resources: [pods, namespaces]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: contextslo-sensor}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: contextslo-sensor}
+subjects:
+  - {kind: ServiceAccount, name: contextslo-sensor, namespace: contextslo-system}

@@ -1,38 +1,53 @@
-# Architecture
+# Architecture and API
 
-ContextSLO separates facts from claims. A truth provider records that a safe event occurred; telemetry adapters report what a security or observability platform retained; the correlator compares both views; and the SLO engine turns that comparison into an actionable reliability signal.
+## Runtime sequence
 
 ```text
-Synthetic journey ──► Ground-truth provider ──┐
-                                              ├──► Correlator ──► SLI/SLO engine ──► API/UI/CI
-Security telemetry ──► Vendor-neutral adapters┘
+Operator / API
+      │ create session + CTX marker
+      ▼
+Canary runner ───────► process / file / DNS / TCP / HTTP / cloud / MCP
+      │                                      │
+      │ truth events                         │ external telemetry
+      ▼                                      ▼
+Durable session ◄──── eBPF sensor      Adapter normalization
+      │                                      │
+      └──────────── marker + dimension ──────┘
+                             │
+                             ▼
+                    Correlation deadline
+                             │
+                             ▼
+                  SLI / SLO / error budget
 ```
 
-## Current community preview
+Truth and observation are distinct types. A failed canary action is a failed truth requirement. A successful action without telemetry is an observation failure. Telemetry without workload, process, or identity causality is an attribution failure.
 
-The runnable preview ships with a deterministic demo truth provider and four scenarios. This makes the full score, API, persistence, dashboard, error-budget, and regression workflow reproducible on any laptop without privileged access.
-
-The repository also contains the CO-RE eBPF tracepoint program that anchors the Linux truth-sensor backend. Its userspace loader, Kubernetes operator reconciliation, and production telemetry adapters are intentionally tracked as the next implementation phase; the preview does not claim that demo observations came from a production CNAPP.
-
-## Scoring contract
-
-Every expected event is scored using two independent questions:
-
-- **Observed (45 points):** did matching telemetry arrive inside the measurement window?
-- **Attributed (55 points):** did that telemetry retain the correct originating context?
-
-The run score is the mean of required checks. Context dimensions retain their own score and latency distribution. An SLO breach consumes `100 - score` from the configured context error budget.
-
-## API surface
+## API
 
 | Method | Path | Purpose |
 |---|---|---|
-| `GET` | `/healthz` | Liveness/readiness |
+| `GET` | `/healthz`, `/readyz` | Health and readiness |
+| `GET` | `/metrics` | Prometheus text metrics |
+| `GET` | `/api/v1/meta` | Auth, mode, and adapter discovery |
 | `GET` | `/api/v1/overview` | Dashboard aggregate |
-| `GET` | `/api/v1/runs` | Validation history |
-| `POST` | `/api/v1/runs` | Execute a validation scenario |
-| `GET` | `/api/v1/runs/{id}` | Retrieve evidence for one run |
-| `GET/PUT` | `/api/v1/slo` | Read or update the active SLO |
-| `POST` | `/api/v1/ingest` | Accept a generic adapter observation |
+| `GET/PUT` | `/api/v1/slo` | Active Security Context SLO |
+| `GET` | `/api/v1/clusters` | Multi-cluster evidence inventory |
+| `GET/POST` | `/api/v1/sessions` | List or allocate live sessions |
+| `GET` | `/api/v1/sessions/{marker}` | Session truth and observations |
+| `POST` | `/api/v1/sessions/{marker}/correlate` | Close and score a session |
+| `POST` | `/api/v1/truth` | Canary/eBPF truth envelope |
+| `POST` | `/api/v1/ingest` | Normalized observation |
+| `POST` | `/api/v1/ingest/{adapter}` | Vendor payload ingestion |
+| `GET/POST` | `/api/v1/runs` | History or synchronous validation |
+| `GET` | `/api/v1/runs/{id}` | Evidence and score for one run |
 
-Adapter events require a marker, source, dimension, observation state, attribution state, and occurrence time. The endpoint is deliberately vendor-neutral.
+Every mutating endpoint requires `Authorization: Bearer <token>` when `CONTEXTSLO_API_TOKEN` is configured.
+
+## Persistence
+
+The versioned state contains the SLO, bounded run history, active and completed sessions, deduplicated observations, and per-cluster counters. Writes use a same-directory temporary file, `fsync`, atomic rename, and directory `fsync`.
+
+## Deployment boundaries
+
+The server, operator, canary, and sensor are separate runtime roles even though the first three share one static binary. Only the sensor needs kernel capabilities. Telemetry adapters terminate at the server HTTP boundary and never run privileged code.

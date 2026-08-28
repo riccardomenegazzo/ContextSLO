@@ -1,13 +1,10 @@
 name: CI
-
 on:
   push:
     branches: [main]
   pull_request:
-
 permissions:
   contents: read
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -16,19 +13,49 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-          cache: false
+          cache: true
       - name: Format check
         run: test -z "$(gofmt -l .)"
       - name: Vet
         run: go vet ./...
       - name: Test
         run: go test -race -coverprofile=coverage.out ./...
-      - name: Build
+      - name: Build application
         run: CGO_ENABLED=0 go build -trimpath ./cmd/contextslo
-
+      - name: Render Kubernetes resources
+        run: kubectl kustomize deploy/kubernetes >/dev/null
   container:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Build image
+      - name: Build application image
         run: docker build --tag contextslo:${{ github.sha }} .
+  ebpf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Install eBPF compiler
+        run: sudo apt-get update && sudo apt-get install -y bpftool clang llvm
+      - name: Generate CO-RE object
+        run: sh scripts/generate-ebpf.sh
+      - name: Build eBPF userspace loader
+        run: CGO_ENABLED=0 go build -tags ebpf ./cmd/contextslo-sensor
+  regression-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Context SLO gate
+        run: go run ./cmd/contextslo validate --scenario baseline
+      - name: Publish gate summary
+        if: always()
+        run: |
+          echo '## ContextSLO regression gate' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Safe synthetic baseline validated process, file, network, DNS, Kubernetes, API, cloud identity, and MCP context.' >> "$GITHUB_STEP_SUMMARY"

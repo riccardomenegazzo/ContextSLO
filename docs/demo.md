@@ -1,17 +1,31 @@
-# Five-minute demo
+# Demo and live validation
 
-1. Start ContextSLO with `docker compose up --build`.
-2. Open `http://localhost:8080` and point out that the sensor being connected is not the outcome—the 80.6% context integrity score is.
-3. Follow the dashed graph edge from `order-agent` to `orders-role`. The cloud action exists, but workload causality was lost.
-4. Run **Healthy baseline**. All eight dimensions become fully attributed and the graph heals.
-5. Run **MCP attribution gap**. The tool call remains visible but loses its calling process, demonstrating why event counts alone are insufficient.
-6. Open **Security SLO**, change the target, and export the audit report.
+## Interview demo
 
-The CLI expresses the same gate for CI:
+1. Run `docker compose up --build` and open `http://localhost:8080`.
+2. Explain why an 80.6% context score is more meaningful than a connected sensor count.
+3. Follow the dashed edge from the agent to cloud identity.
+4. Run **Healthy baseline** to show a complete deterministic control.
+5. Run **Live telemetry validation** to execute real local canaries. Cloud, MCP, or adapter gaps appear as honest failures until configured.
+
+## Live adapter exercise
+
+Create a session, note its marker, and send marked telemetry during the collection window:
 
 ```bash
-contextslo validate --scenario baseline
-contextslo validate --scenario identity-gap # returns non-zero
+curl -sS -X POST localhost:8080/api/v1/sessions \
+  -H 'Content-Type: application/json' \
+  -d '{"cluster":"kind","service":"orders-api"}'
+
+curl -sS -X POST localhost:8080/api/v1/ingest/falco \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "rule":"Context canary process",
+    "output":"CTX-82FA10 execve observed",
+    "output_fields":{"proc.name":"contextslo","proc.pid":42,"k8s.pod.name":"orders-api","k8s.ns.name":"prod"}
+  }'
+
+curl -sS -X POST localhost:8080/api/v1/sessions/CTX-82FA10/correlate -d '{}'
 ```
 
-The failing exit status is the primitive a pull-request check can use to block a security-observability regression.
+In Kubernetes, the operator automates allocation, Job execution, collection, and correlation from each `SecurityContextSLO` resource.

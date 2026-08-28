@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: contextslo-operator
+  namespace: contextslo-system
+  labels: {app.kubernetes.io/name: contextslo, app.kubernetes.io/component: operator}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: contextslo, app.kubernetes.io/component: operator}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: contextslo, app.kubernetes.io/component: operator}
+    spec:
+      serviceAccountName: contextslo-operator
+      securityContext: {runAsNonRoot: true, runAsUser: 65532, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: operator
+          image: contextslo:local
+          imagePullPolicy: IfNotPresent
+          args: ["operator", "--server", "http://contextslo.contextslo-system.svc:8080", "--image", "contextslo:local", "--cluster", "default"]
+          resources:
+            requests: {cpu: 10m, memory: 24Mi}
+            limits: {cpu: 200m, memory: 128Mi}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}

@@ -4,6 +4,9 @@ resources:
   - namespace.yaml
   - crd.yaml
   - rbac.yaml
+  - pvc.yaml
   - deployment.yaml
+  - operator.yaml
   - service.yaml
+  - network-policy.yaml
   - sample-slo.yaml

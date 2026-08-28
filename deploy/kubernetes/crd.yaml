@@ -30,14 +30,15 @@ spec:
           properties:
             spec:
               type: object
-              required: [target, service, requiredContext]
+              required: [target, service, latency, requiredContext]
               properties:
                 service: {type: string, minLength: 1}
                 tier: {type: string, default: Tier 1}
-                target: {type: number, minimum: 0, maximum: 100}
+                target: {type: number, minimum: 0.01, maximum: 100}
                 window: {type: string, default: 30d}
                 latency:
                   type: object
+                  required: [p95]
                   properties:
                     p95: {type: string, pattern: '^[0-9]+(ms|s|m)$'}
                 requiredContext:

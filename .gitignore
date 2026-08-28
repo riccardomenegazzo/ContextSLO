@@ -4,4 +4,6 @@
 /.vscode/
 .DS_Store
 *.out
+contextslo
+internal/truthsensor/context_truth_bpfel.o
 coverage.html
