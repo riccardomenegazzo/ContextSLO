@@ -3,7 +3,11 @@ set -eu
 output="internal/truthsensor/context_truth_bpfel.o"
 temporary="$(mktemp -d)"
 trap 'rm -rf "$temporary"' EXIT
-bpftool btf dump file /sys/kernel/btf/vmlinux format c > "$temporary/vmlinux.h"
+if command -v bpftool >/dev/null 2>&1 && bpftool version >/dev/null 2>&1; then
+  bpftool btf dump file /sys/kernel/btf/vmlinux format c > "$temporary/vmlinux.h"
+else
+  cp agent/ebpf/vmlinux_min.h "$temporary/vmlinux.h"
+fi
 arch="$(uname -m)"
 case "$arch" in
   x86_64) target_arch=x86 ;;
