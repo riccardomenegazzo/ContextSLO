@@ -39,7 +39,9 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Install eBPF compiler
-        run: sudo apt-get update && sudo apt-get install -y clang llvm linux-tools-common linux-tools-$(uname -r)
+        run: |
+          sudo apt-get update && sudo apt-get install -y clang llvm linux-tools-common linux-tools-$(uname -r)
+          sudo ln -sf "/usr/lib/linux-tools/$(uname -r)/bpftool" /usr/local/bin/bpftool
       - name: Generate CO-RE object
         run: sh scripts/generate-ebpf.sh
       - name: Build eBPF userspace loader
