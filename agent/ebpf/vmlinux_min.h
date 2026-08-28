@@ -9,6 +9,9 @@ typedef unsigned int __u32;
 typedef signed int __s32;
 typedef unsigned long long __u64;
 typedef signed long long __s64;
+typedef __u16 __be16;
+typedef __u32 __be32;
+typedef __u32 __wsum;
 typedef int pid_t;
 
 enum bpf_map_type {
